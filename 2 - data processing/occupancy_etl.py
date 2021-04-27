@@ -129,17 +129,18 @@ else:
     job_control_file = './' + JOBNAME +".cfg"
     blockface_config_filename = './common/' +BlockfaceDataframeName.lower()+'.json'
     occupancy_config_filename = './common/' +OccupancyDataframeName.lower()+'.json'
+    
 print(job_control_file)
 if os.path.isfile(job_control_file):
     miscProcess.log_info(SCRIPT_NAME, "Job control filename: {} exist".format(job_control_file))
     paramFile, ReturnCode = readEnvironmentParameters.read_job_control(job_control_file)
 
     if ReturnCode !=0:
-        miscProcess.log_error(SCRIPT_NAME, "Error : Reading Job Control file {} {}".format(job_control_file,ReturnCode))
+        miscProcess.log_error(SCRIPT_NAME, "Error : Reading Job Control file {} ".format(job_control_file),ReturnCode)
         exit(STEP)
     globals().update(paramFile)
 else:
-    miscProcess.log_info(SCRIPT_NAME, "Job control filename: {} doesn't exist {}".format(job_control_file, STEP))
+    miscProcess.log_error(SCRIPT_NAME, "Job control filename: {} doesn't exist ".format(job_control_file), STEP)
     exit(STEP)
 
 
@@ -150,13 +151,15 @@ else:
 miscProcess.log_step(SCRIPT_NAME, "PERFORMING STEP: {}: {}".format(STEP, STEP_DESC))
 
 if 'OutputPath' not in globals():
-    miscProcess.log_error(SCRIPT_NAME,"ERROR: Parameter OutputPath is not defined on control file: {}".format(JOBNAME+".cfg"))
+    miscProcess.log_error(SCRIPT_NAME,"ERROR: Parameter OutputPath is not defined on control file: {}".format(JOBNAME+".cfg"), STEP)
     exit(STEP)
+else:
+   OutputPath=str(OutputPath)
 
 miscProcess.log_print("OutputPath: {}".format(OutputPath))
 
 if 'RerunId' not in globals():
-    miscProcess.log_error(SCRIPT_NAME,"ERROR: Parameter RerunId is not defined on control file: {}".format(JOBNAME+".cfg"))
+    miscProcess.log_error(SCRIPT_NAME,"ERROR: Parameter RerunId is not defined on control file: {}".format(JOBNAME+".cfg"), STEP)
     exit(STEP)
 
 miscProcess.log_print("OutputPath: {}".format(OutputPath))
@@ -175,26 +178,30 @@ else:
 if StartStep.isnumeric():
     StartStep=int(StartStep)
 else:
-    miscProcess.log_error(SCRIPT_NAME, "ERROR: Parameter StartStep: {} is not numerics value, check file: {}".format(StartStep))
+    miscProcess.log_error(SCRIPT_NAME, "ERROR: Parameter StartStep: {} is not numerics value, check file: {}".format(StartStep,\
+                                    job_control_file),STEP)
     exit(STEP)
 
 
 if StopStep.isnumeric():
     StopStep=int(StopStep)
 else:
-    miscProcess.log_error(SCRIPT_NAME, "ERROR: Parameter StepStep: {} is not numerics value, check file: {}".format(StopStep))
+    miscProcess.log_error(SCRIPT_NAME, "ERROR: Parameter StepStep: {} is not numerics value, check file: {}".format(StopStep,\
+                                    job_control_file), STEP)
     exit(STEP)
 
 if max_retry_count.isnumeric():
     max_retry_count=int(max_retry_count)
 else:
-    miscProcess.log_error(SCRIPT_NAME, "ERROR: Parameter max_retry_delay: {} is not numerics value, check file: {}".format(max_retry_count))
+    miscProcess.log_error(SCRIPT_NAME, "ERROR: Parameter max_retry_delay: {} is not numerics value, check file: {}".format(max_retry_count,\
+                                  job_control_file),STEP)
     exit(STEP)
 
 if retry_delay.isnumeric():
     retry_delay=int(retry_delay)
 else:
-    miscProcess.log_error(SCRIPT_NAME, "ERROR: Parameter retry_delay: {} is not numerics value, check file: {}".format(retry_delay))
+    miscProcess.log_error(SCRIPT_NAME, "ERROR: Parameter retry_delay: {} is not numerics value, check file: {}".format(retry_delay, \
+                                 job_control_file), STEP)
     exit(STEP)
 
 """
@@ -255,14 +262,14 @@ miscProcess.log_step(SCRIPT_NAME, "PERFORMING STEP {}:{} ".format(STEP, STEP_DES
 
 if(StartStep <= STEP and StopStep >=STEP):
     miscProcess.log_step(SCRIPT_NAME, "PERFORMING STEP {}: {} ".format(STEP,STEP_DESC))
-
+    print(blockface_config_filename)
     if os.path.isfile(blockface_config_filename):
         miscProcess.log_info(SCRIPT_NAME, "Blockface Dataframe Configuration filename: {} exists ".format(blockface_config_filename))
         blockface_config_dict = processDataframeConfig.json_reader(blockface_config_filename)
         #update_runtime_tracker('blockface_config_dict', blockface_config_dict)
     else:
         miscProcess.log_error(SCRIPT_NAME, "ERROR: Dataframe Configuration file: {} does not exist ".\
-                                format(blockface_config_filename, STEP))
+                                format(blockface_config_filename), STEP)
         exit(STEP)
 
 
@@ -308,7 +315,7 @@ if(StartStep <= STEP and StopStep >=STEP):
         print("Blocface dataframe read")
 
     except Exception as e:
-        miscProcess.log_error(SCRIPT_NAME, "Source Error: {}".format(e))
+        miscProcess.log_error(SCRIPT_NAME, "Source Error: {}".format(e), STEP)
         exit(STEP)
 
     print(source_data_info_array)
@@ -324,7 +331,7 @@ if(StartStep <= STEP and StopStep >=STEP):
     (ReturnCode, rec_cnt) = executeBlockface.executeBlockfaceOperations(src_df, OutputPath, cols_list, max_retry_count,retry_delay)
 
     if ReturnCode != 0:
-        miscProcess.log_error(SCRIPT_NAME, "Error Processing Transformation Failed ")
+        miscProcess.log_error(SCRIPT_NAME, "Error Processing Transformation Failed ",STEP)
 
     src_df.show(3)
     update_runtime_tracker('CompletedStep', STEP)
@@ -343,7 +350,7 @@ if(StartStep <= STEP and StopStep >=STEP):
         miscProcess.log_info(SCRIPT_NAME, "Occupancy Configuration filename: {} exists ".format(occupancy_config_filename))
         occupancy_config_dict = processDataframeConfig.json_reader(occupancy_config_filename)
     else:
-        miscProcess.log_error(SCRIPT_NAME, "ERROR: Occupancy Configuration file: {} does not exist ".format(occupancy_config_filename, STEP))
+        miscProcess.log_error(SCRIPT_NAME, "ERROR: Occupancy Configuration file: {} does not exist ".format(occupancy_config_filename), STEP)
         exit(STEP)
 
     
@@ -392,7 +399,7 @@ if(StartStep <= STEP and StopStep >=STEP):
         (src_df, source_data_info_array) = executeOccupancyProcess.sourceOccupancyReadParquet(occupancyFilePath, TargetOccpDFSchema, PartitionColumn)
 
     except Exception as e:
-        miscProcess.log_error(SCRIPT_NAME, "Source Error: {}".format(e))
+        miscProcess.log_error(SCRIPT_NAME, "Source Error: {}".format(e), STEP)
         exit(STEP)
 
     print(source_data_info_array)
@@ -409,7 +416,7 @@ if(StartStep <= STEP and StopStep >=STEP):
                                                     max_retry_count,retry_delay)
 
     if ReturnCode != 0:
-        miscProcess.log_error(SCRIPT_NAME, "Error Processing Transformation Failed ")
+        miscProcess.log_error(SCRIPT_NAME, "Error Processing Transformation Failed ", STEP)
 
     src_df.show(3)
     update_runtime_tracker('CompletedStep', STEP)

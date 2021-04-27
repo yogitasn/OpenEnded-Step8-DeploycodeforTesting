@@ -10,18 +10,18 @@ from pathlib import Path
 
 
 
-def assign_job_id(self):
+def assign_job_id():
     
     job_id = random.randint(1,10)
     return job_id
 
-def update_job_status(self, status):
-    job_id = self.assign_job_id()
+def update_job_status(status):
+    job_id = assign_job_id()
     print("Job ID Assigned: {}".format(job_id))
     #update_time = datetime.datetime.now()
     #table_name = config.get('POSTGRES', 'job_tracker_table_name')
     table_name = "spark_job"
-    conn = self.get_db_connection()
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
@@ -45,7 +45,7 @@ def update_job_status(self, status):
             values (%s, %s, %s,%s)
         """).format(sql.Identifier(table_name))
 
-        cursor.execute(query, (job_id, self.jobname, status, self.trade_date))
+        cursor.execute(query, (job_id, jobname, status, trade_date))
         
         logging.info("Printing the output of spark job table {}".format(table_name))
         cursor.execute("SELECT * FROM {}".format(table_name))
@@ -59,7 +59,7 @@ def update_job_status(self, status):
         logging.error("Error getting value from the Database {}".format(error))
         return
 
-def get_job_status(self, job_id):
+def get_job_status(job_id):
 # connect db and send sql query
     table_name = config.get('POSTGRES', 'job_tracker_table_name')
     conn = self.get_db_connection()
@@ -74,7 +74,7 @@ def get_job_status(self, job_id):
         return
     
 
-def get_db_connection(self):
+def get_db_connection():
     connection = None
 
     # Construct connection string
@@ -86,10 +86,14 @@ def get_db_connection(self):
     
     #conn_string = "host={0} user={1} dbname={2} password={3} sslmode={4}".format(*config['POSTGRES'].values())
     
-    conn_string = "host={0} user={1} dbname={2} password={3} sslmode={4}".format(host, user, dbname, password, sslmode)
+    #conn_string = "host={0} user={1} dbname={2} password={3} sslmode={4}".format(host, user, dbname, password, sslmode)
     
     try:
-        connection = psycopg2.connect(conn_string)
+        connection = psycopg2.connect(user='postgres',
+                                      password='Quark@2416',
+                                      host='localhost',
+                                      port='5432',
+                                      database='postgres_db')
         logging.info(" Successfully connected to postgres DB")
     except (Exception, psycopg2.Error) as error:
         logging.error("Error while connecting to PostgreSQL {}".format(error))

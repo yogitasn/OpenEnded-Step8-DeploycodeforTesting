@@ -24,7 +24,6 @@ def global_SQLContext(spark1):
 
 def global_EffectDt(iEffevtDt):
     global EffectvDt
-
     EffectvDt=datetime.strptime(iEffevtDt, "%Y-%m%d").date()
 
 def get_currentDate():
@@ -75,6 +74,8 @@ def sourceOccupancyReadParquet(occupancyFilePath, custom_schema, partition_value
 
     source_data_info["occupancyFilePath"] = occupancyFilePath
     source_data_info["partition"] = str(partition_value)
+
+    occupancy.show(5)
 
     return (occupancy, source_data_info)
 
@@ -190,10 +191,10 @@ def executeOccupancyOperations(src_df, output, cols_list, partn_col, max_retry_c
             try:
                 Success = True
                 miscProcess.log_print("Writing occupancy dataframe to output file: {}".format(output))
-                select_df.write.mode("overwrite").partitionBy(PartitionColumn).parquet(".//Parking.parquet")
+                select_df.write.mode("overwrite").partitionBy(PartitionColumn).parquet("C://Output//Parking.parquet")
 
                 miscProcess.log_print("Writing date dimension to output file: {}".format(output))
-                date_dim.write.mode("overwrite").partitionBy(PartitionColumn).parquet(".//Parking.parquet")
+                date_dim.write.mode("overwrite").partitionBy(PartitionColumn).parquet("C://Output//date_dim.parquet")
             except:
                 Sucess = False
                 RetryCt += 1

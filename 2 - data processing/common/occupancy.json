@@ -1,0 +1,169 @@
+{
+ "sources":{
+    "driverSource":{
+        "filetype":"CSV",
+        "hasHeader":"N",
+        "filePath":"C:\\Test\\Paid_Parking.csv",
+        "fields": [
+            {
+              "metadata": {},
+              "name": "OccupancyDateTime",
+              "nullable": true,
+              "type": "StringType()"
+            },
+            {
+              "metadata": {},
+              "name": "Occupied_Spots",
+              "nullable": true,
+              "type": "IntegerType()"
+            },
+            {
+              "metadata": {},
+              "name": "BlockfaceName",
+              "nullable": true,
+              "type": "StringType()"
+            },
+            {
+              "metadata": {},
+              "name": "SideOfStreet",
+              "nullable": true,
+              "type": "StringType()"
+            },
+            {
+              "metadata": {},
+              "name": "Station_Id",
+              "nullable": true,
+              "type": "StringType()"
+            },
+            {
+                "metadata": {},
+                "name": "ParkingTimeLimitCategory",
+                "nullable": true,
+                "type": "IntegerType()"
+              },
+              {
+                "metadata": {},
+                "name": "Available_Spots",
+                "nullable": true,
+                "type": "IntegerType()"
+              },
+              {
+                "metadata": {},
+                "name": "PaidParkingArea",
+                "nullable": true,
+                "type": "StringType()"
+              },
+              {
+                "metadata": {},
+                "name": "PaidParkingSubArea",
+                "nullable": true,
+                "type": "StringType()"
+              },
+              {
+                "metadata": {},
+                "name": "PaidParkingRate",
+                "nullable": true,
+                "type": "DoubleType()"
+              },
+              {
+                "metadata": {},
+                "name": "ParkingCategory",
+                "nullable": true,
+                "type": "StringType()"
+              },
+              {
+                "metadata": {},
+                "name": "Location",
+                "nullable": true,
+                "type": "StringType()"
+              }
+
+          ]
+        }
+      },
+      "targetDataframeDetails":{
+        "dataframeName": "SeattleOccupancy",
+        "dataframeBusiness":"Details about the occupancy",
+        "dataframeDescription":"Account Transaction Summary",
+        "dataframePartition":"MONTH",
+        "dataframeLoadStrategy":"append",
+        "dataframeStorageFormat":"PARQUET",
+        "dataframeColumnInfo": [
+          {
+            "columnName":"OccupancyDateTime",
+            "columnBusinessName":"Occupancy Date Time",
+            "columnDescription": "Occupancy Date time",
+            "columnDataType": "String"
+          },{
+            "columnName":"Occupied_Spots",
+            "columnBusinessName":"Occupied Spots",
+            "columnDescription": "Occupied Spots",
+            "columnDataType": "Integer"
+          },
+            {
+            "columnName":"BlockfaceName",
+            "columnBusinessName":"BlockfaceName",
+            "columnDescription": "BlockfaceName",
+            "columnDataType": "STRING"
+          },
+          {
+            "columnName":"SideOfStreet",
+            "columnBusinessName":"SideOfStreet",
+            "columnDescription": "SideOfStreet",
+            "columnDataType": "STRING"
+          },
+          {
+            "columnName":"Station_Id",
+            "columnBusinessName":"Parking Category",
+            "columnDescription": "Parking Category",
+            "columnDataType": "STRING"
+          },
+          {
+            "columnName":"ParkingTimeLimitCategory",
+            "columnBusinessName":"ParkingLimitCategory",
+            "columnDescription": "ParkingTimeLimitCategory",
+            "columnDataType": "Integer"
+          },
+          {
+            "columnName":"Available_Spots",
+            "columnBusinessName":"Available_Spots",
+            "columnDescription": "Available_Spots",
+            "columnDataType": "INTEGER"
+          },
+          {
+            "columnName":"PaidParkingArea",
+            "columnBusinessName":"PaidParkingArea",
+            "columnDescription": "PaidParkingArea",
+            "columnDataType": "STRING"
+          },
+          {
+            "columnName":"PaidParkingSubArea",
+            "columnBusinessName":"PaidParkingSubArea",
+            "columnDescription": "PaidParkingSubArea",
+            "columnDataType": "STRING"
+          },
+          {
+            "columnName":"PaidParkingRate",
+            "columnBusinessName":"PaidParkingRate",
+            "columnDescription": "PaidParkingRate",
+            "columnDataType": "DOUBLE"
+          },
+          {
+            "columnName":"ParkingCategory",
+            "columnBusinessName":"ParkingCategory",
+            "columnDescription": "ParkingCategory",
+            "columnDataType": "STRING"
+          },
+          {
+            "columnName":"Location",
+            "columnBusinessName":"Location",
+            "columnDescription": "Location",
+            "columnDataType": "STRING"
+          }
+        ]
+      }
+    }
+    
+            
+              
+      

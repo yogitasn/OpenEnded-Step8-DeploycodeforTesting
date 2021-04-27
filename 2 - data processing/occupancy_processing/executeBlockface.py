@@ -84,9 +84,6 @@ def sourceBlockfaceReadParquet(blockfacefilePath, cust_schema):
     source_data_info = {}
     source_data_info["type"] = "CSV"
 
-    #filepath = source_config['sources']['driverSource']["filePath"]
-    print("Blockface file path : {}".format(blockfacefilePath))
-
 
     try:
         blockface = spark.read.format("csv") \
