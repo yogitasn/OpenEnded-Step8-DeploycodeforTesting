@@ -8,71 +8,85 @@ from psycopg2 import sql
 from pathlib import Path
 
 
+def create_job_table():
+    """ insert a new vendor into the vendors table """
+    sql = """CREATE TABLE spark_job (job_id INT NOT NULL, job_name VARCHAR(50),\
+             status VARCHAR(50), dataset VARCHAR(50), loadtype VARCHAR(50), step INT,\
+             stepdesc VARCHAR(50), year_processed VARCHAR(10),\date DATE NOT NULL)"""
 
+    try:
+        conn = get_db_connection()
+        # create a new cursor
+        cur = conn.cursor()
+        # execute the INSERT statement                                
+        cur.execute(sql)
+       
+        conn.commit()
+        # close communication with the database
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def insert_job_details(job_id, job_name, status, dataset, loadtype, step, stepdesc, year_processed, date):
+    """ insert job details into the table """
+    sql = """insert into spark_job (job_id, job_name, status, dataset, loadtype, step, stepdesc,year_processed, date)
+            values (%s,%s,%s,%s,%s,%s,%s,%s,%s);"""
+    conn = None
+    vendor_id = None
+    try:
+        conn = get_db_connection()
+        # create a new cursor
+        cur = conn.cursor()
+        # execute the INSERT statement
+        cur.execute(sql, (job_id,job_name,status, dataset,loadtype, step, stepdesc, year_processed, date))
+        conn.commit()
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
 
 def assign_job_id():
     
     job_id = random.randint(1,10)
     return job_id
 
-def update_job_status(status):
-    job_id = assign_job_id()
-    print("Job ID Assigned: {}".format(job_id))
-    #update_time = datetime.datetime.now()
-    #table_name = config.get('POSTGRES', 'job_tracker_table_name')
-    table_name = "spark_job"
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    try:
-        # [Execute the SQL statement to insert to job status table]
-        logging.info("Trying to create table {}".format(table_name))
-        cursor.execute("DROP TABLE IF EXISTS {}".format(table_name))
-
-        create_table_query = sql.SQL("""
-            CREATE TABLE {} (job_id INT NOT NULL, job_name VARCHAR(50),\
-                                status VARCHAR(50),trade_date DATE NOT NULL);
-        """).format(sql.Identifier(table_name))
-
-        cursor.execute(create_table_query)
-        
-        logging.info("Created Table {} for job_id: {}".format(table_name,job_id))
-
-        logging.info(" Updating status of the job in the table")
-
-        query = sql.SQL("""
-            insert into {} (job_id, job_name, status, trade_date)
-            values (%s, %s, %s,%s)
-        """).format(sql.Identifier(table_name))
-
-        cursor.execute(query, (job_id, jobname, status, trade_date))
-        
-        logging.info("Printing the output of spark job table {}".format(table_name))
-        cursor.execute("SELECT * FROM {}".format(table_name))
-        
-        rows = cursor.fetchall()
-        
-        for row in rows:
-            logging.info("Data row = (%s, %s, %s, %s)" %(str(row[0]), str(row[1]), str(row[2]), str(row[3])))
-
-    except (Exception, psycopg2.Error) as error:
-        logging.error("Error getting value from the Database {}".format(error))
-        return
-
 def get_job_status(job_id):
 # connect db and send sql query
-    table_name = config.get('POSTGRES', 'job_tracker_table_name')
-    conn = self.get_db_connection()
+    table_name = "spark_job"
+    sql ="""SELECT spark_job.status FROM spark_job where spark_job.job_id= %s ;"""
+    conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        logging.info(" Fetching status of the job from the table")
-        cursor.execute("SELECT status FROM {} where job_id={}", table_name, job_id)
-        record = cursor.fetchall()
-        return record
+        print(" Fetching status of the job from the table")
+        cursor.execute(sql, (job_id,))
+        status = cursor.fetchone()[0]
+        return status
     except (Exception, psycopg2.Error) as error:
-        logging.error("Error getting value from the Database {}".format(error))
+        print("Error getting value from the Database {}".format(error))
         return
-    
+
+def get_historic_job_status(year):
+# connect db and send sql query
+    table_name = "spark_job"
+    sql ="""SELECT spark_job.status FROM spark_job where spark_job.year_processed= %s ;"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        print(" Fetching status of the job from the table")
+        cursor.execute(sql, (year,))
+        status = cursor.fetchone()[0]
+        return status
+    except (Exception, psycopg2.Error) as error:
+        print("Error getting value from the Database {}".format(error))
+        return
+
+
 
 def get_db_connection():
     connection = None
@@ -84,17 +98,13 @@ def get_db_connection():
     password = ""
     sslmode = ""
     
-    #conn_string = "host={0} user={1} dbname={2} password={3} sslmode={4}".format(*config['POSTGRES'].values())
-    
-    #conn_string = "host={0} user={1} dbname={2} password={3} sslmode={4}".format(host, user, dbname, password, sslmode)
-    
     try:
         connection = psycopg2.connect(user='postgres',
                                       password='Quark@2416',
-                                      host='localhost',
+                                      host='127.0.0.1',
                                       port='5432',
                                       database='postgres_db')
-        logging.info(" Successfully connected to postgres DB")
+        print(" Successfully connected to postgres DB")
     except (Exception, psycopg2.Error) as error:
         logging.error("Error while connecting to PostgreSQL {}".format(error))
         

@@ -3,7 +3,8 @@
     "driverSource":{
         "filetype":"CSV",
         "hasHeader":"N",
-        "filePath":"C:\\Test\\Paid_Parking.csv",
+        "filePath":"C:\\Test\\PaidParking\\*.csv",
+        "OutputPath":"C:\\ParkingOutput\\",
         "fields": [
             {
               "metadata": {},

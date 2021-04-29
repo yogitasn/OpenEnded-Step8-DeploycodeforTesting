@@ -148,7 +148,7 @@ def executeBlockfaceOperations(src_df, output, cols_list, max_retry_count,retry_
                     .withColumn('sat_end3',format_minstoHHMMSS('sat_end3'))
         
 
-    miscProcess.log_print("Writing to output file: {}".format(output))
+    #miscProcess.log_print("Writing to output file: {}".format(output))
 
     select_df = select_df.select([colname for colname in input_df.columns if colname in (cols_list)])
 

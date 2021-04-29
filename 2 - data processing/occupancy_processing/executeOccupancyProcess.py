@@ -75,16 +75,15 @@ def sourceOccupancyReadParquet(occupancyFilePath, custom_schema, partition_value
     source_data_info["occupancyFilePath"] = occupancyFilePath
     source_data_info["partition"] = str(partition_value)
 
-    occupancy.show(5)
 
     return (occupancy, source_data_info)
 
-def createStationIDDF():
+def createStationIDDF(cust_schema):
 
     occ_df_2020 = spark.read.format("csv") \
                         .option("header", True) \
-                        .schema(schema) \
-                        .load("C://Test//Paid_Parking.csv")
+                        .schema(cust_schema) \
+                        .load("C:\\Test\\PaidParking\\2020_Paid_Parking.csv")
 
 
     occ_df_2020 = occ_df_2020.withColumn('Station_Id',remove_non_word_characters(F.col('Station_Id')))
@@ -144,7 +143,7 @@ def executeOccupancyOperations(src_df, output, cols_list, partn_col, max_retry_c
             else:
                 miscProcess.log_info(SCRIPT_NAME, "Failed on reading input file, re-try in {} seconds ".format(retry_delay))
 
-
+    print(cols_list)
     select_df = input_df.select([colname for colname in input_df.columns if colname in (cols_list)])
 
     for column in cols_list:
@@ -155,7 +154,9 @@ def executeOccupancyOperations(src_df, output, cols_list, partn_col, max_retry_c
             
         elif column == 'OccupancyDateTime':
             spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY")
-            select_df = select_df.withColumn(column, timestamp_format(F.col(column), "mm/dd/yyyy hh:mm:ss a"))
+            select_df = select_df.withColumn(column, timestamp_format(F.col(column), "MM/dd/yyyy hh:mm:ss a"))
+
+            select_df = select_df.withColumn(PartitionColumn,date_format(F.col(column), "MMMM")) 
              
             date_dim = select_df.withColumn('day_of_week',date_format(F.col(column), "EEEE")) \
                                 .withColumn('month',date_format(F.col(column), "MMMM")) 
@@ -180,7 +181,9 @@ def executeOccupancyOperations(src_df, output, cols_list, partn_col, max_retry_c
                                  .withColumn(split_col[1],select_df[split_col[1]].cast(DoubleType())) 
 
             select_df=select_df.drop(column)
-            
+    
+                
+     
      #   select_df = select_df.select(cols_list)
         #select_df = select_df.select([colname for colname in input_df.columns if colname in (cols_list)])
 
@@ -191,12 +194,14 @@ def executeOccupancyOperations(src_df, output, cols_list, partn_col, max_retry_c
             try:
                 Success = True
                 miscProcess.log_print("Writing occupancy dataframe to output file: {}".format(output))
-                select_df.write.mode("overwrite").partitionBy(PartitionColumn).parquet("C://Output//Parking.parquet")
+                select_df.show(3)
+                select_df.write.mode("overwrite").partitionBy(PartitionColumn).parquet(output)
 
                 miscProcess.log_print("Writing date dimension to output file: {}".format(output))
-                date_dim.write.mode("overwrite").partitionBy(PartitionColumn).parquet("C://Output//date_dim.parquet")
+                date_dim.show(3)
+                date_dim.write.mode("overwrite").partitionBy(PartitionColumn).parquet(output)
             except:
-                Sucess = False
+                Success = False
                 RetryCt += 1
                 if RetryCt == max_retry_count:
                     miscProcess.log_info(SCRIPT_NAME, "Failed on writing to Output after {} tries: {} ".format(max_retry_count, output))
@@ -210,23 +215,34 @@ def executeOccupancyOperations(src_df, output, cols_list, partn_col, max_retry_c
         return ReturnCode, rec_cnt
 
 
-def executeHistoricOccupancyOperations(output, cols_list, partn_col, max_retry_count,retry_delay):
+def executeHistoricOccupancyOperations(src_df, output, cols_list, partn_col, max_retry_count,retry_delay, custom_schema):
     
     PartitionColumn = partn_col
-    station_id_lookup = createStationIDDF()
+    station_id_lookup = createStationIDDF(custom_schema)
 
-    occ_df = occ_df\
+    occ_df = src_df\
                 .join(station_id_lookup, ['Station_Id'], how='left_outer')\
-                .select(occ_df.OccupancyDateTime,occ_df.Station_Id,\
-                        occ_df.Occupied_Spots,occ_df.Available_Spots,\
+                .select(src_df.OccupancyDateTime,src_df.Station_Id,\
+                        src_df.Occupied_Spots,src_df.Available_Spots,\
                         station_id_lookup.Longitude,station_id_lookup.Latitude)
+
+    spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY")
+    
+    occ_df = occ_df.withColumn('OccupancyDateTime', timestamp_format(F.col('OccupancyDateTime'), "MM/dd/yyyy hh:mm:ss a"))
+             
+    occ_df = occ_df.withColumn(PartitionColumn,date_format(F.col('OccupancyDateTime'), "MMMM")) 
+          
+    ReturnCode=0
+    rec_cnt=0
+    RetryCt =0
+    Success=False
 
     while(RetryCt < max_retry_count) and not Success:
         try:
             Success = True
             occ_df.write.mode("overwrite").partitionBy(PartitionColumn).parquet(output)
         except:
-            Sucess = False
+            Success = False
             RetryCt += 1
             if RetryCt == max_retry_count:
                 miscProcess.log_info(SCRIPT_NAME, "Failed on writing to Output after {} tries: {} ".format(max_retry_count, output))

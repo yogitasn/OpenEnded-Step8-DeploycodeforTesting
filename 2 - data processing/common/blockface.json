@@ -4,6 +4,7 @@
       "filetype":"CSV",
       "hasHeader":"N",
       "filePath":"C:\\Test\\Blockface.csv",
+      "OutputPath":"C:\\Output\\",
       "fields": [
         {
           "metadata": {},

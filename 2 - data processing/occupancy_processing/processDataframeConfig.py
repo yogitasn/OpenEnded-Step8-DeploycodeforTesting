@@ -93,6 +93,11 @@ def get_source_driverFilerPath(df_dict):
     miscProcess.log_info(SCRIPT_NAME, "driverFilePath: {}".format(driverFilePath))
     return driverFilePath
 
+def get_source_OutputPath(df_dict):
+    outputFilePath = df_dict['sources']['driverSource']["OutputPath"]
+    miscProcess.log_info(SCRIPT_NAME, "OutputPathFilePath: {}".format(outputFilePath))
+    return outputFilePath
+
 
 def main(input_file):
     print(input_file)

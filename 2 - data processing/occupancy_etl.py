@@ -26,8 +26,10 @@ from occupancy_processing import processDataframeConfig
 from occupancy_processing import executeBlockface
 from occupancy_processing import readEnvironmentParameters
 from occupancy_processing import executeOccupancyProcess
+from occupancy_processing import job_tracker
 import sys
 import os
+import glob
 
 
 path = str(Path(Path(__file__).parent.absolute()).parent.absolute())
@@ -70,26 +72,11 @@ PROCESS_TYPE = 'POC'
 #=======================================================================================================#
 ############################ FUNCTIONS #################################################################
 #=======================================================================================================#
-# Write to Runtime Process Tracker 
-tracker_file_name = "C://JobTracker//"+JOBNAME+"_"+UserId+"00"+".json"
+""" Track the etl processing status in POSTGRES table """
 
-# track in RDMS
-tracker_dict = {}
-def update_runtime_tracker(param, value):
-    tracker_dict.update({param: value})
-    spark.sparkContext.parallelize([tracker_dict]).toDF().coalesce(1).write.mode('overwrite').json(tracker_file_name)
+def update_control_table(job_id, JOBNAME, status, dataset, loadtype, step, stepdesc, year_processed, date):
+    job_tracker.insert_job_details(job_id, JOBNAME, status, dataset, loadtype, step, stepdesc, year_processed, date)
 
-
-#=======================================================================================================#
-#=== Determine Current Environment ======================================================================
-#-======================================================================================================#
-"""
-RuntimeEnv = socket.gethostname[:3].lower()
-if RuntimeEnv not in ['dev','sit','pat']:
-    RuntimeEnv='prod'
-
-RuntimeUserId=getpass.getUser().lower()
-"""
 
 #=========================================================================================================
 #================ Open Spark Context Session =============================================================
@@ -150,13 +137,6 @@ else:
 # ALWAYS PERFORM THIS STEP
 miscProcess.log_step(SCRIPT_NAME, "PERFORMING STEP: {}: {}".format(STEP, STEP_DESC))
 
-if 'OutputPath' not in globals():
-    miscProcess.log_error(SCRIPT_NAME,"ERROR: Parameter OutputPath is not defined on control file: {}".format(JOBNAME+".cfg"), STEP)
-    exit(STEP)
-else:
-   OutputPath=str(OutputPath)
-
-miscProcess.log_print("OutputPath: {}".format(OutputPath))
 
 if 'RerunId' not in globals():
     miscProcess.log_error(SCRIPT_NAME,"ERROR: Parameter RerunId is not defined on control file: {}".format(JOBNAME+".cfg"), STEP)
@@ -174,6 +154,15 @@ if 'RetryDelay' not in globals():
 else:
     RetryDelay=int(RetryDelay)
 
+if isinstance('historic_years', list) == False:
+    historic_years = ['2014','2015','2016','2017']
+
+print(historic_years)
+if isinstance('recent_years', list) == False:
+    recent_years = ['2020']
+
+print(historic_years)
+print(recent_years)
 
 if StartStep.isnumeric():
     StartStep=int(StartStep)
@@ -204,7 +193,7 @@ else:
                                  job_control_file), STEP)
     exit(STEP)
 
-"""
+
 #==============================================================================================================#
 (STEP, STEP_DESC)=(30, "Read Possible Previous Execution Runtime Control")
 #==============================================================================================================#
@@ -212,6 +201,7 @@ else:
 
 miscProcess.log_step(SCRIPT_NAME, "PERFORMING STEP {}:{} ".format(STEP, STEP_DESC))
 
+"""
 tracker_dict={}
 
 if SparkSubmitClientMode == 'Y':
@@ -253,6 +243,34 @@ else:
 
     
 """
+
+#historic_years =['2014', '2015', '2016', '2017']
+
+isHistoric = True
+
+for y in historic_years:
+    status = job_tracker.get_historic_job_status(y)
+    print("{} for year:{}".format(status,y))
+    if status=="Failed":
+        miscProcess.log_info(SCRIPT_NAME, "Historical data for the year {}  needs to be re processed ".format(y))
+        isHistoric = False
+
+
+isHistoric1 = True
+
+#recent_years= ['2020']
+for y in recent_years:
+    status = job_tracker.get_historic_job_status(y)
+    print("{} for year:{}".format(status,y))
+    if status=="Failed":
+        miscProcess.log_info(SCRIPT_NAME, "Historical data for the year {}  needs to be re processed ".format(y))
+        isHistoric1 = False
+
+
+
+print("Flag for executing Historic data {}".format(isHistoric))
+print("Flag for executing Historic data1 {}".format(isHistoric1))
+
 #==============================================================================================================#
 (STEP, STEP_DESC)=(40, "Processing Blockface Dataframe configuration file")
 #===============================================================================================================#
@@ -266,7 +284,6 @@ if(StartStep <= STEP and StopStep >=STEP):
     if os.path.isfile(blockface_config_filename):
         miscProcess.log_info(SCRIPT_NAME, "Blockface Dataframe Configuration filename: {} exists ".format(blockface_config_filename))
         blockface_config_dict = processDataframeConfig.json_reader(blockface_config_filename)
-        #update_runtime_tracker('blockface_config_dict', blockface_config_dict)
     else:
         miscProcess.log_error(SCRIPT_NAME, "ERROR: Dataframe Configuration file: {} does not exist ".\
                                 format(blockface_config_filename), STEP)
@@ -276,17 +293,27 @@ if(StartStep <= STEP and StopStep >=STEP):
 # Get Table Column List
 cols_list = processDataframeConfig.build_dataframe_column_list(blockface_config_dict)
 
-update_runtime_tracker('ColumnList', cols_list)
-
 blockfacefilePath = processDataframeConfig.get_source_driverFilerPath(blockface_config_dict)
-
-update_runtime_tracker("BlockfacefilePath", blockfacefilePath)
 
 # Get Target Table Schema
 TargetDataframeSchema = processDataframeConfig.get_dataframe_schema(blockface_config_dict)
 
+OutputPath =  processDataframeConfig.get_source_OutputPath(blockface_config_dict)
 
-update_runtime_tracker('CompletedStep', STEP)
+if os.path.isdir(OutputPath):
+    miscProcess.log_info(SCRIPT_NAME, " Output directory {} exists ".format(OutputPath))
+else:
+    miscProcess.log_error(SCRIPT_NAME, "ERROR: Output directory: {} does not exist ".format(OutputPath), STEP)
+    exit(STEP)
+
+update_control_table(job_id=123, JOBNAME=JOBNAME, status="In Progess",\
+                    dataset="Blockface Dataset",loadtype="STATIC", \
+                    step=STEP, stepdesc='CompletedStep', 
+                    year_processed = '2021', date=datetime.today())
+
+#update_runtime_tracker('CompletedStep', STEP)
+
+
 #=================================================================
 (STEP, STEP_DESC) =(50, "Create Dataframe, Build and Execute Blockface Transformation Process")
 #==================================================================
@@ -295,12 +322,10 @@ miscProcess.log_step(SCRIPT_NAME, "PERFORMING STEP {}:{} ".format(STEP, STEP_DES
 
 if(StartStep <= STEP and StopStep >=STEP):  
     print("Inside 50 Step")
-    # Record time before the load
-    # Get the current system timestamp
     current_time = datetime.now()
     LoadStartTs = current_time.strftime("%Y-%m-%d %H:%M:%S.%f")
     miscProcess.log_print("LoadStartTs: {}".format(LoadStartTs))
-    update_runtime_tracker('LoadStartTs', LoadStartTs)
+#    update_runtime_tracker('LoadStartTs', LoadStartTs)
 
     #=================================================================
     # == Create Blockface Dataframe from the sources
@@ -332,9 +357,15 @@ if(StartStep <= STEP and StopStep >=STEP):
 
     if ReturnCode != 0:
         miscProcess.log_error(SCRIPT_NAME, "Error Processing Transformation Failed ",STEP)
+        update_control_table(job_id=123, JOBNAME=JOBNAME, status="Failed", 
+                            dataset="Blockface Dataset",loadtype="STATIC",step=STEP, 
+                            stepdesc='FailedStep', year_processed= '2021', date=datetime.today())
+        exit(STEP)
 
     src_df.show(3)
-    update_runtime_tracker('CompletedStep', STEP)
+    #update_runtime_tracker('CompletedStep', STEP)
+    update_control_table(job_id=123, JOBNAME=JOBNAME, status="Success", dataset="Blockface Dataset",\
+                     loadtype="STATIC", step = STEP, stepdesc='CompletedStep', year_processed= '2021', date=datetime.today())
 
 
 
@@ -353,17 +384,14 @@ if(StartStep <= STEP and StopStep >=STEP):
         miscProcess.log_error(SCRIPT_NAME, "ERROR: Occupancy Configuration file: {} does not exist ".format(occupancy_config_filename), STEP)
         exit(STEP)
 
-    
-   # TableLoadFreq_lcase = processDataframeConfig.load_freq(occupancy_config_dict).lower()
-   # miscProcess.log_info(SCRIPT_NAME, 'Table Load Freq: {0}'.format(occupancy_config_dict))
 
     # Get Dataframe Column List
     OccpnColumnList = processDataframeConfig.build_dataframe_column_list(occupancy_config_dict)
-    update_runtime_tracker('Occupancy_ColumList', OccpnColumnList)
+#    update_runtime_tracker('Occupancy_ColumList', OccpnColumnList)
 
     # Get Column Partition
     PartitionColumn = processDataframeConfig.partition_column(occupancy_config_dict)
-    update_runtime_tracker('Occupancy_Partition_column', PartitionColumn)
+ #   update_runtime_tracker('Occupancy_Partition_column', PartitionColumn)
 
     # Get Target Dataframe Schema
     TargetOccpDFSchema = processDataframeConfig.get_dataframe_schema(occupancy_config_dict)
@@ -372,8 +400,9 @@ if(StartStep <= STEP and StopStep >=STEP):
 
     # Get Occupancy dataset File path
     occupancyFilePath = processDataframeConfig.get_source_driverFilerPath(occupancy_config_dict)
-    update_runtime_tracker('OccupancyFilePath', occupancyFilePath)
+  #  update_runtime_tracker('OccupancyFilePath', occupancyFilePath
 
+    OutputPath =  processDataframeConfig.get_source_OutputPath(occupancy_config_dict)
 
 #=================================================================
 (STEP, STEP_DESC) =(70, "Create Dataframe, Build and Execute Occupancy Process")
@@ -386,40 +415,106 @@ if(StartStep <= STEP and StopStep >=STEP):
     current_time = datetime.now()
     LoadStartTs = current_time.strftime("%Y-%m-%d %H:%M:%S.%f")
     miscProcess.log_print("LoadStartTs: {}".format(LoadStartTs))
-    update_runtime_tracker('LoadStartTs', LoadStartTs)
+   # update_runtime_tracker('LoadStartTs', LoadStartTs)
 
     #=================================================================
     # == Create Occupancy Dataframe from the sources
     #==================================================================
 
+    miscProcess.log_info("Processing historical data")
+    today = datetime.now()
+    current_year = today.year
 
-    (src_df,  source_data_info_array) = (None, None)
 
-    try:
-        (src_df, source_data_info_array) = executeOccupancyProcess.sourceOccupancyReadParquet(occupancyFilePath, TargetOccpDFSchema, PartitionColumn)
+    file_names = glob.glob(occupancyFilePath)
+    
+    for file in file_names:
+        year = file.split("\\")[3][:4]
+        print(year)
+        print(isHistoric)
+        print(isHistoric1)
 
-    except Exception as e:
-        miscProcess.log_error(SCRIPT_NAME, "Source Error: {}".format(e), STEP)
-        exit(STEP)
+        if int(year) >= 2012 and int(year) <=2017 and isHistoric==False:
+            (src_df,  source_data_info_array) = (None, None)
+            print("Inside historical 2012-2017")
+            occupancyFilePath = file
+            
+            try:
+                (src_df, source_data_info_array) = executeOccupancyProcess.sourceOccupancyReadParquet(occupancyFilePath, TargetOccpDFSchema, PartitionColumn)
 
-    print(source_data_info_array)
-    src_df.head(3)
-    print("occupancy df schema")
-    src_df.printSchema()
-    #=================================================================
-    # == Create Blockface Transformations on Dataframe
-    #==================================================================
-    print("Output path is {}".format(OutputPath))
-    print("max retry delay {}".format(max_retry_count))
-    print("retry delay is {}".format(retry_delay))
-    (ReturnCode, rec_cnt) = executeOccupancyProcess.executeOccupancyOperations(src_df, OutputPath, OccpnColumnList, PartitionColumn,\
-                                                    max_retry_count,retry_delay)
+            except Exception as e:
+                miscProcess.log_error(SCRIPT_NAME, "Source Error: {}".format(e), STEP)
+                exit(STEP)
 
-    if ReturnCode != 0:
-        miscProcess.log_error(SCRIPT_NAME, "Error Processing Transformation Failed ", STEP)
 
-    src_df.show(3)
-    update_runtime_tracker('CompletedStep', STEP)
+            #=================================================================
+            # == Create Blockface Transformations on Dataframe
+            #==================================================================        
+            (ReturnCode, rec_cnt) = executeOccupancyProcess.executeHistoricOccupancyOperations(src_df, OutputPath, OccpnColumnList, PartitionColumn,\
+                                                            max_retry_count,retry_delay, TargetOccpDFSchema)
+                                                            
+
+            if ReturnCode != 0:
+                miscProcess.log_error(SCRIPT_NAME, "Error Processing Transformation Failed ", STEP)
+                update_control_table(job_id=123, JOBNAME=JOBNAME, status="Failed", dataset="Occupancy Dataset",\
+                            loadtype="HISTORIC", step=STEP, stepdesc='FailedStep', year_processed = year, date=datetime.today())
+                exit(STEP)
+
+            update_control_table(job_id=123, JOBNAME=JOBNAME, status="Success", dataset="Occupancy Dataset",\
+                            loadtype="HISTORIC", step=STEP, stepdesc='CompletedStep', year_processed = year, date=datetime.today())
+        # update_runtime_tracker('CompletedStep', STEP)
+
+        elif int(year) >=2018 and int(year) <=current_year -1 and isHistoric1==False:
+            print("Inside year {}".format(year))
+            occupancyFilePath = file
+            (src_df,  source_data_info_array) = (None, None)
+            
+            try:
+                (src_df, source_data_info_array) = executeOccupancyProcess.sourceOccupancyReadParquet(occupancyFilePath, TargetOccpDFSchema, PartitionColumn)
+
+            except Exception as e:
+                miscProcess.log_error(SCRIPT_NAME, "Source Error: {}".format(e), STEP)
+                exit(STEP)
+
+            (ReturnCode, rec_cnt) = executeOccupancyProcess.executeOccupancyOperations(src_df, OutputPath, OccpnColumnList, PartitionColumn,\
+                                                            max_retry_count,retry_delay)
+
+            if ReturnCode != 0:
+                miscProcess.log_error(SCRIPT_NAME, "Error Processing Transformation Failed ", STEP)
+                update_control_table(job_id=123, JOBNAME=JOBNAME, status="Failed", dataset="Occupancy Dataset",\
+                            loadtype="HISTORIC", step=STEP, stepdesc='FailedStep', year_processed = year, date=datetime.today())
+                exit(STEP)
+
+            update_control_table(job_id=123, JOBNAME=JOBNAME, status="Success", dataset="Occupancy Dataset",\
+                            loadtype="HISTORIC", step=STEP, stepdesc='CompletedStep',year_processed= year, date=datetime.today())
+        else:
+            occupancyFilePath = file
+            (src_df,  source_data_info_array) = (None, None)
+            
+            try:
+                (src_df, source_data_info_array) = executeOccupancyProcess.sourceOccupancyReadParquet(occupancyFilePath, TargetOccpDFSchema, PartitionColumn)
+
+            except Exception as e:
+                miscProcess.log_error(SCRIPT_NAME, "Source Error: {}".format(e), STEP)
+                exit(STEP)
+
+
+            (ReturnCode, rec_cnt) = executeOccupancyProcess.executeOccupancyOperations(src_df, OutputPath, OccpnColumnList, PartitionColumn,\
+                                                            max_retry_count,retry_delay)
+
+            if ReturnCode != 0:
+                miscProcess.log_error(SCRIPT_NAME, "Error Processing Transformation Failed ", STEP)
+                update_control_table(job_id=123, JOBNAME=JOBNAME, status="Failed", dataset="Occupancy Dataset",\
+                            loadtype="DELTA", step=STEP, stepdesc='FailedStep', year_processed = year, date=datetime.today())
+                exit(STEP)
+
+            update_control_table(job_id=123, JOBNAME=JOBNAME, status="Success", dataset="Occupancy Dataset",\
+                            loadtype="DELTA", step=STEP, stepdesc='CompletedStep',year_processed = year, date=datetime.today())
+    
+    
+
+
+    
 
     miscProcess.complete_log_file()
 
