@@ -57,15 +57,16 @@ pytest --cov
 
 Screenshot:
 
+#### `Testing Output`
 ![Alt text](Screenshot/TestingOutput.PNG?raw=true "TestingOutput")
 
-
+#### `Postgres Job Tracking Table`
 ![Alt text](Screenshot/JobTracking.PNG?raw=true "JobTracking")
 
-
+#### `Testing Output with Coverage`
 ![Alt text](Screenshot/TestingOutputWithCoverage.PNG?raw=true "TestingOutputWithCoverage")
 
-### Testing Coverage
+#### `Testing Coverage Details`
 ```
 TOTAL  20015  12551    37%
 

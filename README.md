@@ -26,7 +26,8 @@ A pipeline is built on the using Python, Pyspark, and unit tests created using P
 
 ## Technologies
 The Project is built with the following technologies:
-* Pytest: Library to test the source code
+* Pytest: Library to test the source code.
+* Pytest-Coverage: Library to get the testing coverage details.
     
 
 
