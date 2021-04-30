@@ -6,7 +6,7 @@
 
 
 ## General Info
-This project is scaling the prototype of Open-Ended Data Engineering Project: Seattle Paid Parking Occupancy
+This project is Step 8- Deploy your code for Testing for Open Ended project: Seattle Paid Parking Occupancy
 
 <hr/>
 
@@ -14,9 +14,9 @@ This project is scaling the prototype of Open-Ended Data Engineering Project: Se
 
 Parking issues have been receiving increasing attention. An accurate parking occupancy prediction is considered to be a key prerequisite to optimally manage limited parking resources. However, parking prediction research that focuses on estimating the occupancy for various parking lots, which is critical to the coordination management of multiple parks (e.g., district-scale or city-scale), is relatively limited.
 
-This project is to scale the data pipeline prototyped in Step Five to work with the entire (Big) dataset.
+This project is to , build a robust test suite, check the edge cases which may break your code, and see if it is performing at the standard you expect it to
 
-A pipeline is built on the cloud using Python, Pyspark, and cloud technologies like Azure Storage, Azure VM, Azure DataFactory, and Azure Databricks 
+A pipeline is built on the using Python, Pyspark, and unit tests created using Python library: Pytest.
 
 * Extraction: The file extraction process is automated using Selenium Python library and headless Chrome driver.
 * Transformation: After files are extracted, transformations are performed using Pyspark (Python API to support Spark)

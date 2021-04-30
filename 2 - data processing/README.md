@@ -65,8 +65,13 @@ Screenshot:
 
 ![Alt text](Screenshot/TestingOutputWithCoverage.PNG?raw=true "TestingOutputWithCoverage")
 
+### Testing Coverage
+```
+TOTAL  20015  12551    37%
 
+7 passed
+2 warnings
+0 failed
 
-### Spark Jobs 
+````
 
-![Alt text](Screenshot/spark_job_ui.PNG?raw=true "SparkJobUI")
