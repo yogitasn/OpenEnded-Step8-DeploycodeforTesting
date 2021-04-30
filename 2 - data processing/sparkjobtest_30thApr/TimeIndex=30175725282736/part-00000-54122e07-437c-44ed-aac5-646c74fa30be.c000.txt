@@ -1,0 +1,3 @@
+===== SCRIPT: occupancy_etl.py completed at 30 Apr 2021 17:57:25.282736 ====
+Occupancy Configuration filename: ./common/occupancy.json exists 
+ 

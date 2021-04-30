@@ -1,0 +1,3 @@
+===== SCRIPT: occupancy_etl.py completed at 30 Apr 2021 17:57:31.371024 ====
+Dataframe Column List: ['occupancydatetime', 'occupied_spots', 'blockfacename', 'sideofstreet', 'station_id', 'parkingtimelimitcategory', 'available_spots', 'paidparkingarea', 'paidparkingsubarea', 'paidparkingrate', 'parkingcategory', 'location']
+ 

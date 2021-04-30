@@ -18,7 +18,7 @@ def create_job_table():
         conn = get_db_connection()
         # create a new cursor
         cur = conn.cursor()
-        # execute the INSERT statement                                
+        # execute the CREATE statement                                
         cur.execute(sql)
        
         conn.commit()
@@ -30,6 +30,7 @@ def create_job_table():
         if conn is not None:
             conn.close()
 
+""" Insert the job detail records in the control table """
 
 def insert_job_details(job_id, job_name, status, dataset, loadtype, step, stepdesc, year_processed, date):
     """ insert job details into the table """
@@ -56,6 +57,7 @@ def assign_job_id():
     job_id = random.randint(1,10)
     return job_id
 
+""" Get the job status """
 def get_job_status(job_id):
 # connect db and send sql query
     table_name = "spark_job"
@@ -71,6 +73,7 @@ def get_job_status(job_id):
         print("Error getting value from the Database {}".format(error))
         return
 
+""" Get the job status of the historic data processing """
 def get_historic_job_status(year):
 # connect db and send sql query
     table_name = "spark_job"
@@ -92,7 +95,7 @@ def get_historic_job_status(year):
         return
 
 
-
+""" Function to connect to POSTGRES database """
 def get_db_connection():
     connection = None
 

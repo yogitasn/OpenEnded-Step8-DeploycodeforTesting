@@ -18,6 +18,7 @@ from occupancy_processing import miscProcess
 
 SCRIPT_NAME= os.path.basename(__file__)
 
+""" Set the Spark """
 def global_SQLContext(spark1):
     global spark
     spark= spark1
@@ -34,19 +35,23 @@ def get_currentDate():
 def regex_replace_values():
     regexp_replace
 
+""" Function to remove non word characters e.g. '19,788' -> '19788'"""
 def remove_non_word_characters(col):
     return F.regexp_replace(col, "[^\\w\\s]+", "")
 
+""" Function to remove parenthesis e.g. (108.88 > 108.88 """
 def remove__parenthesis(col):
     return F.regexp_replace(col, "\(|\)", "")
 
+""" Function to convert timestamp column value to a specific date format """ 
 def date_format(col, formattype):
     return F.date_format(col, formattype)
 
+""" Function to convert a column to a timestampformat """
 def timestamp_format(col, timestampformat):
     return F.to_timestamp(col, format=timestampformat)
     
-# Read Parquet function - input source config, partition name and column mapping list
+""" Read Parquet function - input file path, schema and partition name """
 def sourceOccupancyReadParquet(occupancyFilePath, custom_schema, partition_value):
 
     miscProcess.log_info(SCRIPT_NAME, "Reading Occupancy CSV file...")
@@ -61,7 +66,7 @@ def sourceOccupancyReadParquet(occupancyFilePath, custom_schema, partition_value
 
     try:
         occupancy = spark.read.format("csv") \
-                    .option("header", False) \
+                    .option("header", True) \
                     .schema(custom_schema) \
                     .load(occupancyFilePath)
 
@@ -77,6 +82,8 @@ def sourceOccupancyReadParquet(occupancyFilePath, custom_schema, partition_value
 
     return (occupancy, source_data_info)
 
+
+""" Function to create a dataframe used in a broadcast while joining two dataframes """
 def createStationIDDF(cust_schema):
 
     occ_df_2020 = spark.read.format("csv") \
@@ -114,7 +121,7 @@ def createStationIDDF(cust_schema):
 
 
 
-
+""" Function to transform historic and delta paid parking occupancy datasets (>=2018) """
 def executeOccupancyOperations(src_df, output, datedimoutputpath, cols_list, partn_col, max_retry_count,retry_delay):
 
     PartitionColumn = partn_col
@@ -150,7 +157,7 @@ def executeOccupancyOperations(src_df, output, datedimoutputpath, cols_list, par
     
     for column in cols_list:
         if column == 'station_id':
-        
+            print("Reading inside column transformations of {}".format(column))
             select_df = select_df.withColumn(column,remove_non_word_characters(F.col("station_id")))
             select_df = select_df.withColumn(column,select_df[column].cast(IntegerType()))
             
@@ -217,7 +224,7 @@ def executeOccupancyOperations(src_df, output, datedimoutputpath, cols_list, par
         miscProcess.log_print("Number of Records Processed: {}".format(rec_cnt))
         return ReturnCode, rec_cnt
 
-
+""" Function to transform historic paid parking datasets from 2012-2017 """
 def executeHistoricOccupancyOperations(src_df, output, cols_list, partn_col, max_retry_count,retry_delay, custom_schema):
     
     PartitionColumn = partn_col

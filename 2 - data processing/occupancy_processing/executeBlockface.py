@@ -74,7 +74,7 @@ def format_minstoHHMMSS(x):
     except:
         None
 
-
+""" Function to read blockface csv file using file path and schema """
 def sourceBlockfaceReadParquet(blockfacefilePath, cust_schema):
   
     
@@ -101,7 +101,7 @@ def sourceBlockfaceReadParquet(blockfacefilePath, cust_schema):
     return (blockface, source_data_info)
 
 
-
+""" Function to perform transformations on the dataset """
 def executeBlockfaceOperations(src_df, output, cols_list, max_retry_count,retry_delay):
 
     miscProcess.log_print("Starting the Blockface Execute Operations")
@@ -181,63 +181,6 @@ def main():
 
     executeBlockfaceOperations(src_df, output, cols_list, max_retry_count,retry_delay)
 
-    """
-
-    dataframe_config_filename='C:/Step 8 Deploy your code for Testing/2 - data processing/common/blockface.json'
-
-    StartStep = 10
-    STEP = 20
-    StopStep = 30
-    STEP_DESC= "Processing Blockface Dataframe configuration file"
-
-    if(StartStep <= STEP and StopStep >=STEP):
-        miscProcess.log_step(SCRIPT_NAME, "PERFORMING STEP {}: {} ".format(STEP,STEP_DESC))
-
-        if os.path.isfile(dataframe_config_filename):
-            miscProcess.log_info(SCRIPT_NAME, "Dataframe Configuration filename: {} exists ".format(dataframe_config_filename))
-            table_config_dict = processDataframeConfig.json_reader(dataframe_config_filename)
-        else:
-            miscProcess.log_error(SCRIPT_NAME, "ERROR: Dataframe Configuration file: {} does not exist ".\
-                                  format(dataframe_config_filename, STEP))
-            exit(STEP)
-
-    
-   # TableLoadFreq_lcase = processDataframeConfig.load_freq(table_config_dict).lower()
-    #miscProcess.log_info(SCRIPT_NAME, 'Table Load Freq: {0}'.format(TableLoadFreq_lcase))
-
-    # Get Table Column List
-    cols_list = processDataframeConfig.build_dataframe_column_list(table_config_dict)
-
-    # Get Table Column name and type into Dictionary
-    #ColumnDict = processDataframeConfig.build_table_column_dict(table_config_dict)
-
-    # Get Target Table Schema
-
-    TargetDataframeSchema = get_dataframe_schema(table_config_dict)
-    #processDataframeConfig.get_dataframe_schema(table_config_dict)
-
-
-    (src_df, source_data_info_array) = (None,  None)
-
-    try:
-        (src_df, source_data_info_array) = sourceBlockfaceReadParquet(table_config_dict,TargetDataframeSchema)
-
-    except Exception as e:
-        miscProcess.log_error(SCRIPT_NAME, "Source Error: {}".format(e))
-
-    src_df.show(3)
-    #=================================================================
-    # == Create Dataframe from the sources
-    #==================================================================
-    #tgt_config_source = table_config_dict["targetTableDetails"]
-    max_retry_count = 3
-    retry_delay = 20
-
-    (ReturnCode, rec_cnt) = executeBlockfaceOperations(src_df, "C:\\Output\\", cols_list, max_retry_count,retry_delay)
-
-    if ReturnCode != 0:
-        miscProcess.log_error(SCRIPT_NAME, "Error Processing Transformation Failed ")
-  """
 
 if __name__=='__main__':
     
