@@ -12,30 +12,34 @@ def global_parameters(temp_path):
     global g_temp_path
     g_temp_path = temp_path
 
-
+""" Function to read the json configuration file """
 def json_reader(json_file):
     with open(json_file) as jfile:
         df_dict = json.load(jfile)
     return df_dict
 
+
+""" Function to get the dataframe long name """
 def dataframe_long_na(df_dict):
     return(df_dict['dataframeName'])
 
-def get_table_loadStatergy(df_dict):
+
+""" Function to get the dataframe load strategy"""
+def get_dataframe_loadStrategy(df_dict):
     dataframe_loadStatergy = df_dict['targetDataframeDetails']['DFLoadStrategy'].upper()
     miscProcess.log_info(SCRIPT_NAME, "Dataframe loadStatergy: {}".format(dataframe_loadStatergy))
     return table_loadStatergy
+
+
+""" Function to get the dataframe load frequency """
 
 def load_freq(df_dict):
     load_freq = df_dict['targetDataframeDetails']['dataframeFrequency']
     return load_freq
 
+
+""" Function to get the dataframe partition column """
 def partition_column(df_dict):
-   # if len(df_dict['targetDataframeDetails']['dataframePartition']) > 1:
-    #    part_col, part_type = df_dict['targetDataframeDetails']['dataframePartition'].split(' ',1)
-    #    part_col_lcase = part_col.lower()
-    #else:
-        #part_col_lcase = 'load_dt'
 
     part_col_lcase = df_dict['targetDataframeDetails']['dataframePartition']
 
@@ -43,6 +47,7 @@ def partition_column(df_dict):
 
     return part_col_lcase
 
+""" Function to count the number of columns """
 
 def count_columns(df_dict):
     count = 0
@@ -53,6 +58,7 @@ def count_columns(df_dict):
     print(count)
     return count
 
+""" Function to build the dataframe column list from the json file"""
 def build_dataframe_column_list(df_dict):
 
     column_list = []
@@ -66,6 +72,7 @@ def build_dataframe_column_list(df_dict):
     miscProcess.log_info(SCRIPT_NAME, "Dataframe Column List: {}".format(column_list))
     return column_list
 
+""" Function to build the dataframe schema using the input from json file"""
 def get_dataframe_schema(df_dict):
 
     dtypes = {
@@ -87,16 +94,23 @@ def get_dataframe_schema(df_dict):
     return cust_schema
 
 
-
+""" Function to get the dataframe input path """
 def get_source_driverFilerPath(df_dict):
     driverFilePath = df_dict['sources']['driverSource']["filePath"]
     miscProcess.log_info(SCRIPT_NAME, "driverFilePath: {}".format(driverFilePath))
     return driverFilePath
 
+""" Function to get the dataframe output path """
 def get_source_OutputPath(df_dict):
     outputFilePath = df_dict['sources']['driverSource']["OutputPath"]
     miscProcess.log_info(SCRIPT_NAME, "OutputPathFilePath: {}".format(outputFilePath))
     return outputFilePath
+
+""" Function to get the dimension output path """
+def get_source_dateDimOutputPath(df_dict):
+    datedimOutputPath = df_dict['sources']['driverSource']["DimOutputPath"]
+    miscProcess.log_info(SCRIPT_NAME, "Date Dim OutputPathFilePath: {}".format(datedimOutputPath))
+    return datedimOutputPath
 
 
 def main(input_file):

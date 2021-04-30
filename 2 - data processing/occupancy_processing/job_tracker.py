@@ -80,8 +80,13 @@ def get_historic_job_status(year):
     try:
         print(" Fetching status of the job from the table")
         cursor.execute(sql, (year,))
-        status = cursor.fetchone()[0]
-        return status
+        #status = cursor.fetchone()[0]
+        status = cursor.fetchall()
+        if status==[]:
+             return "No entry"
+        else:
+            return status[0][0]
+    
     except (Exception, psycopg2.Error) as error:
         print("Error getting value from the Database {}".format(error))
         return

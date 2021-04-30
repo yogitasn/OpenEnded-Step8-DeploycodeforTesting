@@ -26,12 +26,7 @@ A pipeline is built on the cloud using Python, Pyspark, and cloud technologies l
 
 ## Technologies
 The Project is built with the following technologies:
-* Azure Storage-Containers/File Share: To store the big data
-* Azure Virtual Machine: To execute the ingestion script to download the data to file share
-* Azure Data Factory: To execute a pipeline to copy data from file share to Azure containers
-* Databricks-connect: Allow the user to step through and debug Spark code in the local environment and execute it on remote Azure Databricks cluster
-    * [Reference](https://docs.databricks.com/dev-tools/databricks-connect.html)
-       * Python 3.7.5 (which matches the remote cluster python version)
+* Pytest: Library to test the source code
     
 
 
@@ -51,7 +46,9 @@ Refer the Readme under the data ingestion folder for detailed steps.
 * The driver will call the transformation code for performing pyspark transformations on CSV files for the date range:'2018-2020' and '2012-2017' separately due to varying/missing column data formats and Blockface data
 
 ```
-python occupancy_etl.py
+python occupancy_etl.py <caller_jobname> <log-filename> <blockface-dataframe-name> <occupancy-dataframe-name> <env-path> <spark-client-mode> <user-id>
+
+For e.g. python occupancy_etl.py sparkjobtest sparkjobtest_29thApr.log blockface occupancy .\ N yogitasn
 
 ```
 

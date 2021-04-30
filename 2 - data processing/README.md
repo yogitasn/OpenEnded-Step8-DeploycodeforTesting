@@ -4,43 +4,28 @@ These scripts are used to extract and transform paid parking occupancy data for 
 
 All of the above are done in PySpark. 
 
-#### `databricks.py`
-Standalone script to mount the data from Azure container to Databricks
+#### `executeBlockface.py`
+Script to process the Seattle Blockface dataset
 
-#### `occupancy_transform.py`
-PySpark script for transforming data stored in Azure container i.e. the Paid Parking data from '2012 to present' and Seattle Blockface data.
+#### `executeOccupancyProcess.py`
+PySpark script for transforming historic and delta Paid Parking data from '2012 to present'.
 
-#### `occupancy_etl.py`
-Driver PySpark script to trigger the transformation script for the above
+#### `job_tracker.py`
+Python functions to connect to postgres table, insert job tracking records and get the status of historic and delta loads runs for Occupancy dataset
 
-#### `occupancy_udf.py` 
-UDF to get the data records in HH:MM:SS format.
+#### `miscProcess.py`
+Custom Helper functions for logging the etl execution to text files using spark dataframe
 
+#### `processDataframeConfig.py`
+Custom Helper functions for reading the configuration json file comprising the dataset details like columns, schema etc
 
-
-#### Set up Databricks dev env at local windows
-Provision a Databricks cluster
-
-![Alt text](Screenshot/Databricks_cluster.PNG?raw=true "DatabricksCluster")
-
-```
-Follow the instructions in the below URL and setup data bricks-connect that enables pyspark code on the local machine to be executed on Databricks cluster
-* Reference: https://docs.databricks.com/dev-tools/databricks-connect.html
-    * Your Spark job is planned locally but executed on the remote cluster
-    * Allow the user to step through and debug Spark code in the local environment
-
-* data bricks-connect==7.3.5 (Matching with the cluster type of 7.3.1 LTS)
-* Configuration
-    * The trick is one cannot mess up the delicate databricks-connect and pyspark versions
-    * The Python version on local and databricks cluster should match i.e. Python 3.7.5
+#### `readEnvironmentParameters.py` 
+Custom Helper functions for reading the configuration file.
 
 
-* Test with this example:
-from pyspark.sql import SparkSession
-spark = SparkSession.builder.appName("test").getOrCreate()
-print(spark.range(100).count())  # it executes on the cluster, where you can see the record
+#### `occupancy_etl.py` 
+Driver etl script to process the historical and delta load for Seattle Paid Parking Project
 
-```
 
 
 Car parking has been a major issue in urban areas worldwide. Most countries are facing issues related to the lack of parking places. With the increasing economic development and urbanisation, car ownerships are growing rapidly, which exacerbates the imbalance between parking supply and demand [1]. The Ministry of Public Security of China released data of car ownership nationwide in 2018, showing that the number of cars reached 240 million with an annual growth rate of 10.51%, but the total number of parking spaces was only 102.5 million including private and public parking spaces, which is lower than half of the total number of cars. Moreover, around 30% of the traffic congestion in Chongqing and Shanghai, major cities of China, is due to lack of car parking spaces [2]. This issue is mainly caused by ineffective parking management. According to the latest research report [3], the parking space utilisation rate of more than 90% of cities in China is <50%. With the limited areas in the cities, increasing parking area would not be a sustainable solution, but the implementation of efficient parking management would be a practical solution. The intelligent parking system is an essential part of efficient parking management. In intelligent parking system, the time-sensitive parking occupancy prediction will be of great significance for decision makers and city planners regarding parking.
@@ -55,12 +40,30 @@ python occupancy_etl.py
 
 ```
 
-Final Execution Tables:
+#### Navigate to Tests folder and execute the following command to run the tests
 
-![Alt text](Screenshot/DataframeTables.PNG?raw=true "DataFrameTables")
+```
+pytest -v
+
+```
+
+#### To get the Testing coverage
 
 
-![Alt text](Screenshot/DataframeTables_1.PNG?raw=true "DataFrameTables")
+```
+pytest --cov
+
+```
+
+Screenshot:
+
+![Alt text](Screenshot/TestingOutput.PNG?raw=true "TestingOutput")
+
+
+![Alt text](Screenshot/JobTracking.PNG?raw=true "JobTracking")
+
+
+![Alt text](Screenshot/TestingOutputWithCoverage.PNG?raw=true "TestingOutputWithCoverage")
 
 
 
